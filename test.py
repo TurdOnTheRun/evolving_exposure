@@ -14,7 +14,7 @@ class UnfoldingLongExposure:
         self.output = outputFile
         self.thresholdKernelSize = thresholdKernelSize
         self.threshold = threshold
-        self.deexposureRatio = None
+        self.deexposureRatios = None
 
 
     def get_treshold_binary(self, image):
@@ -56,10 +56,26 @@ class UnfoldingLongExposure:
         int32ImCrop = int32Image[int(r[1]):int(r[1]+r[3]), int(r[0]):int(r[0]+r[2])]
 
         # b8, g8, r8 = int8ImCrop8[:, :, 0], int8ImCrop8[:, :, 1], int8ImCrop8[:, :, 2]
-        # b32, g32, r32 = int32ImCrop[:, :, 0], int32ImCrop[:, :, 1], int32ImCrop[:, :, 2]
+        b32, g32, r32 = int32ImCrop[:, :, 0], int32ImCrop[:, :, 1], int32ImCrop[:, :, 2]
 
-        self.deexposureRatio = 255/int32ImCrop.max()
-        print('Deexposure Ratio:', self.deexposureRatio)
+        blueMax = b32.max()
+        greenMax = g32.max()
+        redMax = r32.max()
+
+        if blueMax > redMax and blueMax > greenMax:
+            i,j = np.unravel_index(b32.argmax(), b32.shape)
+            exposurePoint = int32ImCrop[i,j]
+            self.deexposureRatios = (exposurePoint[0]/255, exposurePoint[1]/(255*(exposurePoint[1]/exposurePoint[0])), exposurePoint[2]/(255*(exposurePoint[2]/exposurePoint[0])))
+        elif greenMax > redMax:
+            i,j = np.unravel_index(g32.argmax(), g32.shape)
+            exposurePoint = int32ImCrop[i,j]
+            self.deexposureRatios = (exposurePoint[0]/(255*(exposurePoint[0]/exposurePoint[1])), exposurePoint[1]/255, exposurePoint[2]/(255*(exposurePoint[2]/exposurePoint[1])))
+        else:
+            i,j = np.unravel_index(r32.argmax(), r32.shape)
+            exposurePoint = int32ImCrop[i,j]
+            self.deexposureRatios = (exposurePoint[0]/(255*(exposurePoint[0]/exposurePoint[2])), exposurePoint[1]/(255*(exposurePoint[1]/exposurePoint[2])), exposurePoint[2]/255)
+        
+        print('Deexposure Ratios:', self.deexposureRatios)
 
 
 
@@ -87,7 +103,7 @@ class UnfoldingLongExposure:
                 continue
 
             cv2.imshow('int8', int8Image.astype(np.uint8))            
-            cv2.waitKey(10)
+            cv2.waitKey(2)
 
         cv2.destroyWindow('int8')
         self.set_deexposure_ratio(int8Image.astype(np.uint8), int32Image)
@@ -111,14 +127,20 @@ class UnfoldingLongExposure:
             else:
                 continue
 
-            cv2.imshow('int8', self.adjust_gamma((finalImage*self.deexposureRatio).clip(0,255).astype(np.uint8), gamma))            
+            evolvingImage = finalImage.copy()
+            evolvingImage[:,:,0] = evolvingImage[:,:,0] * self.deexposureRatios[0]
+            evolvingImage[:,:,1] = evolvingImage[:,:,1] * self.deexposureRatios[1]
+            evolvingImage[:,:,2] = evolvingImage[:,:,2] * self.deexposureRatios[2]
+            cv2.imshow('int8', self.adjust_gamma((evolvingImage).clip(0,255).astype(np.uint8), gamma))            
             cv2.waitKey(10)
-        
-        cv2.imwrite('results/testimage' + str(int(time.time())) + '.png', self.adjust_gamma((finalImage*self.deexposureRatio).clip(0,255).astype(np.uint8), gamma))
+        finalImage[:,:,0] = finalImage[:,:,0] * self.deexposureRatios[0]
+        finalImage[:,:,1] = finalImage[:,:,1] * self.deexposureRatios[1]
+        finalImage[:,:,2] = finalImage[:,:,2] * self.deexposureRatios[2]
+        cv2.imwrite('results/testimage' + str(int(time.time())) + '.png', self.adjust_gamma((finalImage).clip(0,255).astype(np.uint8), gamma))
 
 
 if __name__ == "__main__":
-    ule = UnfoldingLongExposure('photos_short_test_400_5.6_100_200')
+    ule = UnfoldingLongExposure('photos/photos_short_test_400_5.6_100_200')
     ule.adjust_exposure(0.5)
     ule.render(0.5)
 
