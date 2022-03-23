@@ -87,7 +87,7 @@ class UnfoldingLongExposure:
                 continue
 
             cv2.imshow('int8', int8Image.astype(np.uint8))            
-            cv2.waitKey(10)
+            cv2.waitKey(1)
 
         cv2.destroyWindow('int8')
         self.set_deexposure_ratio(int8Image.astype(np.uint8), int32Image)
@@ -112,14 +112,15 @@ class UnfoldingLongExposure:
                 continue
 
             cv2.imshow('int8', self.adjust_gamma((finalImage*self.deexposureRatio).clip(0,255).astype(np.uint8), gamma))            
-            cv2.waitKey(10)
+            cv2.waitKey(1)
         
         cv2.imwrite('results/testimage' + str(int(time.time())) + '.png', self.adjust_gamma((finalImage*self.deexposureRatio).clip(0,255).astype(np.uint8), gamma))
 
 
 if __name__ == "__main__":
-    ule = UnfoldingLongExposure('photos_short_test_400_5.6_100_200')
-    ule.adjust_exposure(0.5)
+    ule = UnfoldingLongExposure('photos/photos_short_test_400_5.6_100_200_blending_edited')
+    ule.adjust_exposure(0.4)
+    import pdb; pdb.set_trace()
     ule.render(0.5)
 
 
