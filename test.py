@@ -50,23 +50,23 @@ class UnfoldingLongExposure:
         return masked
     
 
-    def set_deexposure_ratio(self, int8Image, int32Image):
+    def set_deexposure_ratio(self, int8Image, int32Image, toMaximum=False):
 
-        # Select ROI
-        r = cv2.selectROI(int8Image)
-        # Crop image
-        # int8ImCrop8 = int8Image[int(r[1]):int(r[1]+r[3]), int(r[0]):int(r[0]+r[2])]
-        int32ImCrop = int32Image[int(r[1]):int(r[1]+r[3]), int(r[0]):int(r[0]+r[2])]
+        if not toMaximum:
+            # Select ROI
+            r = cv2.selectROI(int8Image)
+            int32ImCrop = int32Image[int(r[1]):int(r[1]+r[3]), int(r[0]):int(r[0]+r[2])]
+            self.deexposureRatio = 255/int32ImCrop.max()
+            # b8, g8, r8 = int8ImCrop8[:, :, 0], int8ImCrop8[:, :, 1], int8ImCrop8[:, :, 2]
+            # b32, g32, r32 = int32ImCrop[:, :, 0], int32ImCrop[:, :, 1], int32ImCrop[:, :, 2]
+        else:
+            self.deexposureRatio = 255/int32Image.max()
 
-        # b8, g8, r8 = int8ImCrop8[:, :, 0], int8ImCrop8[:, :, 1], int8ImCrop8[:, :, 2]
-        # b32, g32, r32 = int32ImCrop[:, :, 0], int32ImCrop[:, :, 1], int32ImCrop[:, :, 2]
-
-        self.deexposureRatio = 255/int32ImCrop.max()
         print('Deexposure Ratio:', self.deexposureRatio)
 
 
 
-    def adjust_exposure(self, previewGamma=1, visualize=False):
+    def adjust_exposure(self, previewGamma=1, visualize=False, toMaximum=False):
         int8Image = None
         int32Image = None
         defined = False
@@ -94,7 +94,7 @@ class UnfoldingLongExposure:
                 cv2.waitKey(1)
 
         cv2.destroyWindow('int8')
-        self.set_deexposure_ratio(int8Image.astype(np.uint8), int32Image)
+        self.set_deexposure_ratio(int8Image.astype(np.uint8), int32Image, toMaximum)
 
 
     def renderImage(self, gamma=1):
@@ -158,16 +158,18 @@ class UnfoldingLongExposure:
                 gammad = self.adjust_gamma(exposed, gamma)
                 finalFrames.append(gammad.clip(0,255).astype(np.uint8))
                 finalImage += fadeOutBuffer.pop(0)
+        
+        name = str(int(time.time())) + '_' + str(self.output) + '_' + str(self.deexposureRatio)
 
         if final:
-            directory = 'results/' + str(self.output) + '_' + str(int(time.time()))
+            directory = 'results/' + name
             os.mkdir(directory)
             for i, frame in enumerate(finalFrames):
                     cv2.imwrite(directory + '/' + str(1000+i) + '.tif', frame)
         else:
             height, width, _ = finalImage.shape
             fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            videoWriter = cv2.VideoWriter('results/testvideo' + str(self.output) + '_' + str(int(time.time())) + '.mp4', fourcc, 25, (width, height))
+            videoWriter = cv2.VideoWriter('results/' + name + '.mp4', fourcc, 25, (width, height))
 
             for frame in finalFrames:
                 videoWriter.write(frame)
@@ -182,12 +184,36 @@ if __name__ == "__main__":
     # ule = UnfoldingLongExposure('photos/photos_short_test_400_5.6_100_200_blending_edited', deexposureRatio=0.0092804891363686)
     # ule = UnfoldingLongExposure('photos/photos_shoot_1', deexposureRatio=0.07227891156462585) #0.07227891156462585
     # ule = UnfoldingLongExposure('photos/photos_shoot_4', deexposureRatio=0.0037648378905096556) #0.0037648378905096556
-    ule = UnfoldingLongExposure('photos/photos_shootr_4_tif', imageType='tif')
+    
+    
+    ule = UnfoldingLongExposure('photos/photos_andrea_pf_test', imageType='tif')
+    ule.adjust_exposure(toMaximum=True)
+    ule.renderVideo(showMoment=True, fadeOutFrames=1)
 
-    ule.adjust_exposure(previewGamma=0.25, visualize=True)
-    # import pdb; pdb.set_trace()
-    # ule.renderImage()
-    ule.renderVideo(showMoment=True, fadeOutFrames=30)
+    ule = UnfoldingLongExposure('photos/photos_luca_fuzz_test', imageType='tif')
+    ule.adjust_exposure(toMaximum=True)
+    ule.renderVideo(showMoment=True, fadeOutFrames=1)
+
+    ule = UnfoldingLongExposure('photos/photos_andrea_div_test', imageType='tif', deexposureRatio=0.007447429906542056)
+    ule.renderVideo(showMoment=True, fadeOutFrames=1)
+
+    # ule = UnfoldingLongExposure('photos/photos_short_test', imageType='tif')
+    # ule.adjust_exposure(toMaximum=True)
+    # ule.renderVideo(showMoment=True, fadeOutFrames=1)
+
+    # ule = UnfoldingLongExposure('photos/photos_short_test', imageType='tif')
+    # ule.adjust_exposure(previewGamma=0.25, visualize=True, toMaximum=True)
+    # ule.renderVideo(showMoment=True, fadeOutFrames=1)
+
+    # ule = UnfoldingLongExposure('photos/photos_andrea_div_test', imageType='tif', deexposureRatio=0.007447429906542056)
+    # ule.renderVideo(showMoment=True, fadeOutFrames=5)
+
+
+
+    # ule.adjust_exposure(previewGamma=0.25, visualize=True, toMaximum=True)
+    # # import pdb; pdb.set_trace()
+    # # ule.renderImage()
+    # ule.renderVideo(showMoment=True, fadeOutFrames=5)
 
 
 
