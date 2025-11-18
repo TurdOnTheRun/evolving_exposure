@@ -186,16 +186,17 @@ if __name__ == "__main__":
     # ule = UnfoldingLongExposure('photos/photos_shoot_4', deexposureRatio=0.0037648378905096556) #0.0037648378905096556
     
     
-    ule = UnfoldingLongExposure('photos/photos_andrea_pf_test', imageType='tif')
-    ule.adjust_exposure(toMaximum=True)
-    ule.renderVideo(showMoment=True, fadeOutFrames=1)
+    ule = UnfoldingLongExposure('photos/photos_andrea_and_jager_creature', imageType='tif', threshold=4) #Deexposure Ratio 0.002232729183083793
 
-    ule = UnfoldingLongExposure('photos/photos_luca_fuzz_test', imageType='tif')
-    ule.adjust_exposure(toMaximum=True)
-    ule.renderVideo(showMoment=True, fadeOutFrames=1)
+    ule.adjust_exposure(visualize=True)
+    # ule.renderVideo(showMoment=True, fadeOutFrames=1)
 
-    ule = UnfoldingLongExposure('photos/photos_andrea_div_test', imageType='tif', deexposureRatio=0.007447429906542056)
-    ule.renderVideo(showMoment=True, fadeOutFrames=1)
+    # ule = UnfoldingLongExposure('photos/photos_luca_fuzz_test', imageType='tif')
+    # ule.adjust_exposure(toMaximum=True)
+    # ule.renderVideo(showMoment=True, fadeOutFrames=1)
+
+    # ule = UnfoldingLongExposure('photos/photos_andrea_div_test', imageType='tif', deexposureRatio=0.007447429906542056)
+    # ule.renderVideo(showMoment=True, fadeOutFrames=1)
 
     # ule = UnfoldingLongExposure('photos/photos_short_test', imageType='tif')
     # ule.adjust_exposure(toMaximum=True)
